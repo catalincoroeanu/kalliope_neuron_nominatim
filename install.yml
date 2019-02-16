@@ -1,0 +1,12 @@
+- name: kalliope Nominatim neuron install
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  become: true
+
+  tasks:
+    - name: "Install pip dependencies"
+      pip:
+        name: geopy
+        version: 1.18.1
+
