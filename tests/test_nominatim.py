@@ -37,6 +37,11 @@ class TestNominatim(unittest.TestCase):
         with self.assertRaises(MissingParameterException):
             Nominatim(**{"operation": self.reverse, "latitude": self.latitude})
 
+    def testReverseExtratags(self):
+        with self.assertRaises(InvalidParameterException):
+            Nominatim(**{"operation": self.reverse, "latitude": self.latitude, "longitude": self.longitude,
+                         "extratags": True})
+
 
 if __name__ == '__main__':
     unittest.main()

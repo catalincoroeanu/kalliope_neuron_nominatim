@@ -17,18 +17,20 @@ kalliope install --git-url https://github.com/redSpoutnik/kalliope_neuron_nomina
 |------------|------------------------------|---------|------------------------|---------|
 | operation  | YES                          | None    | "geocode" or "reverse" |         |
 | language   | NO                           | False   | string                 | Preferred language in which to return results. Uses standard [RFC2616](http://www.ietf.org/rfc/rfc2616.txt). |
+| extratags  | NO                           | False   | bool                   | Include additional information in the **raw** output if available, e.g. wikipedia link, opening hours. |
 | address    | YES if operation = "geocode" | None    | string                 |         |
 | latitude   | YES if operation = "reverse" | None    | string                 | The string should only represent an integer or float number. |
 | longitude  | YES if operation = "reverse" | None    | string                 | The string should only represent an integer or float number. |
 
 * **"geocode"** operation performs **geocoding** (address -> coordinates) using **address** parameter
 * **"reverse"** operation performs **reverse geocoding** (coordinates -> address) using **latitude** and **longitude** parameters
+* **"extratags"** can only be used with **"geocode"** operation.
 
 ## Return Values
 
 | Name       | Description                      | Type   |
 |------------|----------------------------------|--------|
-| raw        | Raw json from API response       | string |
+| raw        | Raw json from API response       | dict   |
 | address    | Address of requested location    | string |
 | latitude   | Latitude of requested location   | float  |
 | longitude  | Longitude of requested location  | float  |
@@ -90,4 +92,40 @@ Get complete location
           latitude: "{{ latitude }}"
           longitude: "{{ longitude }}"
           say_template: "found location {{ address }} with latitude {{ latitude }} and longitude {{ longitude }}"
+```
+
+Using **extratags** to get opening hours
+
+```yaml
+  - name: "nominatim-opening-hours"
+    signals:
+      - order: "get opening hours for {{ address }}"
+    neurons:
+      - nominatim:
+          language: "en"
+          operation: "geocode"
+          extratags: true
+          address: "{{ address }}"
+          file_template: "templates/nominatim_opening_hours.j2"
+```
+
+With ```templates/nominatim_opening_hours.j2```
+
+```
+{% if raw['extratags']['opening_hours'] is defined %}
+    {{ address }} is open {{
+        raw['extratags']['opening_hours']
+        |replace('-', ' to ')
+        |replace(';', ',')
+        |replace('Mo', ' monday ')
+        |replace('Tu', ' tuesday ')
+        |replace('We', ' wednesday ')
+        |replace('Th', ' thursday ')
+        |replace('Fr', ' friday ')
+        |replace('Sa', ' saturday ')
+        |replace('Su', ' sunday ')
+    }}
+{% else %}
+    This information is not available
+{% endif %}
 ```

@@ -13,6 +13,7 @@ class Nominatim(NeuronModule):
         super(Nominatim, self).__init__(**kwargs)
         # Configuration
         self.language = kwargs.get('language', False)
+        self.extratags = kwargs.get('extratags', False)
         self.operation = kwargs.get('operation', None)
         self.address = kwargs.get('address', None)
         self.latitude = kwargs.get('latitude', None)
@@ -30,12 +31,12 @@ class Nominatim(NeuronModule):
                 logging.debug("[Nominatim] perform operation reverse")
                 message = self.reverse()
 
-            logging.debug("[Nominatim] neuron returned dict %s" % message)
+            logging.debug("[Nominatim] neuron return dict %s" % message)
             self.say(message)
 
     def _is_parameters_ok(self):
         """
-        Check if received parameters are ok depending on operation specified to the the neuron
+        Check if received parameters are ok depending on operation specified to the neuron
         :return: True if parameters are ok
         .. raises:: InvalidParameterException, MissingParameterException
         """
@@ -49,6 +50,8 @@ class Nominatim(NeuronModule):
                 raise MissingParameterException("[Nominatim] reverse : latitude is missing")
             if not self.longitude:
                 raise MissingParameterException("[Nominatim] reverse : longitude is missing")
+            if self.extratags:
+                raise InvalidParameterException("[Nominatim] 'extratags' is not used in reverse geocoding")
             return True
         elif self.operation:
             raise InvalidParameterException("[Nominatim] wrong operation : %s" % self.operation)
@@ -61,7 +64,7 @@ class Nominatim(NeuronModule):
         :return: Dict representing geocoder response
         """
         return self.build_message(
-            self.geolocator.geocode(self.address, addressdetails=True, language=self.language)
+            self.geolocator.geocode(self.address, addressdetails=True, language=self.language, extratags=self.extratags)
         )
 
     def reverse(self):
@@ -70,7 +73,8 @@ class Nominatim(NeuronModule):
         :return:  Dict representing geocoder response
         """
         return self.build_message(
-            self.geolocator.reverse(self.latitude + ", " + self.longitude, addressdetails=True, language=self.language)
+            self.geolocator.reverse(str(self.latitude) + ", " + str(self.longitude), addressdetails=True,
+                                    language=self.language)
         )
 
     @staticmethod
